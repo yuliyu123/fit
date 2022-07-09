@@ -146,7 +146,7 @@ impl Exectuer {
             .arg(branch)
             .output()
             .expect("failed to execute process");
-        println!("{:?}", output);
+        println!("{}", String::from_utf8_lossy(&output.stderr));
         Ok(())
     }
 
