@@ -28,7 +28,9 @@ enum Action {
     Pull {},
 
     #[clap(name = "push")]
-    Push {},
+    Push {
+        branch: String,
+    },
 
     #[clap(name = "rebase", alias = "reb")]
     Rebase {},
@@ -52,7 +54,7 @@ fn main() -> Result<()> {
         Action::Checkout { branch } => Exectuer::checkout(branch)?,
         Action::Delete { branch } => Exectuer::delete(branch)?,
         Action::Pull {} => Exectuer::pull()?,
-        Action::Push {} => Exectuer::push()?,
+        Action::Push { branch } => Exectuer::push(branch)?,
         Action::Rebase {} => Exectuer::rebase()?,
         Action::List {} => Exectuer::list()?,
         Action::Sync {} => Exectuer::sync()?,
@@ -130,14 +132,15 @@ impl Exectuer {
         Ok(())
     }
 
-    fn push() -> Result<()> {
-        // git push --set-upstream origin new_branch
+    fn push(branch: String) -> Result<()> {
+        // git push --set-upstream origin new_branch(default master)
         Command::new("git")
             .arg("push")
             .arg("--set-upstream")
             .arg("origin")
-            .arg(load()?)
-            .spawn()
+            .arg(branch)
+            // .spawn()
+            .output()
             .expect("failed to execute process");
         Ok(())
     }
