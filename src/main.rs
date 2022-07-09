@@ -29,6 +29,7 @@ enum Action {
 
     #[clap(name = "push")]
     Push {
+        // #[clap(long, default_value="master")]
         branch: String,
     },
 
@@ -132,16 +133,20 @@ impl Exectuer {
         Ok(())
     }
 
-    fn push(branch: String) -> Result<()> {
+    fn push(mut branch: String) -> Result<()> {
         // git push --set-upstream origin new_branch(default master)
-        Command::new("git")
+        if branch.is_empty() {
+            branch = load()?;
+        }
+        println!("branch: {}", branch);
+        let output = Command::new("git")
             .arg("push")
             .arg("--set-upstream")
             .arg("origin")
             .arg(branch)
-            // .spawn()
             .output()
             .expect("failed to execute process");
+        println!("{:?}", output);
         Ok(())
     }
 
