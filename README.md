@@ -1,5 +1,5 @@
 # fit
-Fast git tool to manage and sync your develop branch with upstream easily and fastly.
+A fast git tool to manage and sync your develop branch with upstream easily and fastly.
 
 ## alias git cmd
 
