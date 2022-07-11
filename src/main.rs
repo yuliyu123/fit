@@ -147,7 +147,7 @@ impl Exectuer {
                 .arg("-a")
                 .output()
                 .expect("failed to execute process");
-            println!("{}", String::from_utf8_lossy(&output.stderr));
+            println!("{}", String::from_utf8_lossy(&output.stdout));
         });
         Ok(())
     }
