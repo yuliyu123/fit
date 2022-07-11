@@ -1,13 +1,8 @@
-use std::{
-    fs::{self, File},
-    io::Write,
-    path::Path,
-    process::Command,
-};
+use async_std::task;
+use std::process::Command;
 
 use anyhow::{Ok, Result};
 use clap::{Parser, Subcommand};
-use serde::{Deserialize, Serialize};
 
 #[derive(Parser)]
 #[clap(author, version, about)]
@@ -28,10 +23,7 @@ enum Action {
     Pull {},
 
     #[clap(name = "push")]
-    Push {
-        // #[clap(long, default_value="master")]
-        branch: String,
-    },
+    Push { branch: String },
 
     #[clap(name = "rebase", alias = "reb")]
     Rebase {},
@@ -63,111 +55,100 @@ fn main() -> Result<()> {
     Ok(())
 }
 
-const INIT_CFG_DIR: &'static str = ".fit";
-const INIT_CFG: &'static str = ".fit/config.json";
-
-pub fn save(cfg: &Exectuer) -> Result<()> {
-    if !Path::new(INIT_CFG_DIR).exists() {
-        fs::create_dir(INIT_CFG_DIR)?;
-    }
-
-    let json = serde_json::to_string_pretty(cfg);
-    let mut file = File::create(Path::new(INIT_CFG))?;
-    file.write_all(json?.as_bytes())?;
-    Ok(())
-}
-
-pub fn load() -> Result<String> {
-    let file_str = fs::read_to_string(INIT_CFG)?;
-    let cfg: Exectuer = serde_json::from_str(&file_str)?;
-    Ok(cfg.branch)
-}
-
-#[derive(Default, Debug, Serialize, Deserialize)]
-pub struct Exectuer {
-    branch: String,
-}
+pub struct Exectuer {}
 
 impl Exectuer {
     fn set_branch(branch: String) -> Result<()> {
-        save(&Exectuer {
-            branch: branch.clone(),
-        })?;
-        Command::new("git")
-            .arg("branch")
-            .arg(branch)
-            .spawn()
-            .expect("failed to execute process");
-        // Exectuer::checkout(self.branch)?;
+        task::block_on(async {
+            Command::new("git")
+                .arg("branch")
+                .arg(branch.clone())
+                .output()
+                .expect("failed to execute process");
+        });
+        Exectuer::checkout(branch)?;
         Ok(())
     }
 
     fn checkout(branch: String) -> Result<()> {
-        Command::new("git")
-            .arg("checkout")
-            .arg(branch)
-            .spawn()
-            .expect("failed to execute process");
+        task::block_on(async {
+            let output = Command::new("git")
+                .arg("checkout")
+                .arg(branch)
+                .output()
+                .expect("failed to execute process");
+            println!("{}", String::from_utf8_lossy(&output.stderr));
+        });
         Ok(())
     }
 
     fn delete(branch: String) -> Result<()> {
-        // Exectuer::checkout("master".to_string())?;
-        Command::new("git")
-            .arg("branch")
-            .arg("-D")
-            .arg(branch)
-            .spawn()
-            .expect("failed to execute process");
+        Exectuer::checkout("master".to_string())?;
+        task::block_on(async {
+            let output = Command::new("git")
+                .arg("branch")
+                .arg("-D")
+                .arg(branch)
+                .output()
+                .expect("failed to execute process");
+            println!("{}", String::from_utf8_lossy(&output.stderr));
+        });
         Ok(())
     }
 
     fn pull() -> Result<()> {
         // git pull upstream master
-        Command::new("git")
-            .arg("pull")
-            .arg("upstream")
-            .arg("master")
-            .spawn()
-            .expect("failed to execute process");
+        task::block_on(async {
+            let output = Command::new("git")
+                .arg("pull")
+                .arg("upstream")
+                .arg("master")
+                .output()
+                .expect("failed to execute process");
+            println!("{}", String::from_utf8_lossy(&output.stderr));
+        });
         Ok(())
     }
 
-    fn push(mut branch: String) -> Result<()> {
+    fn push(branch: String) -> Result<()> {
         // git push --set-upstream origin new_branch(default master)
-        if branch.is_empty() {
-            branch = load()?;
-        }
-        println!("branch: {}", branch);
-        let output = Command::new("git")
-            .arg("push")
-            .arg("--set-upstream")
-            .arg("origin")
-            .arg(branch)
-            .output()
-            .expect("failed to execute process");
-        println!("{}", String::from_utf8_lossy(&output.stderr));
+        task::block_on(async {
+            let output = Command::new("git")
+                .arg("push")
+                .arg("--set-upstream")
+                .arg("origin")
+                .arg(branch)
+                .output()
+                .expect("failed to execute process");
+            println!("{}", String::from_utf8_lossy(&output.stderr));
+        });
         Ok(())
     }
 
     fn rebase() -> Result<()> {
         // git pull upstream master --rebase
-        Command::new("git")
-            .arg("pull")
-            .arg("upstream")
-            .arg("master")
-            .spawn()
-            .expect("failed to execute process");
+        task::block_on(async {
+            let output = Command::new("git")
+                .arg("pull")
+                .arg("upstream")
+                .arg("master")
+                .output()
+                .expect("failed to execute process");
+            println!("{}", String::from_utf8_lossy(&output.stderr));
+        });
         Ok(())
     }
 
     fn list() -> Result<()> {
         // git branch -a
-        Command::new("git")
-            .arg("branch")
-            .arg("-a")
-            .spawn()
-            .expect("failed to execute process");
+        task::block_on(async {
+            let output = Command::new("git")
+                .arg("branch")
+                .arg("-a")
+                .output()
+                .expect("failed to execute process");
+            println!("{}", String::from_utf8_lossy(&output.stderr));
+        });
         Ok(())
     }
 
@@ -176,19 +157,25 @@ impl Exectuer {
     // * git checkout master
     // * git merge upstream/master
     fn sync() -> Result<()> {
-        Command::new("git")
-            .arg("fetch")
-            .arg("upstream")
-            .spawn()
-            .expect("failed to execute process");
+        task::block_on(async {
+            let output = Command::new("git")
+                .arg("fetch")
+                .arg("upstream")
+                .output()
+                .expect("failed to execute process");
+            println!("{}", String::from_utf8_lossy(&output.stderr));
+        });
 
-        // Exectuer::checkout("master".to_string())?;
+        Exectuer::checkout("master".to_string())?;
 
-        Command::new("git")
-            .arg("merge")
-            .arg("upstream/master")
-            .spawn()
-            .expect("failed to execute process");
+        task::block_on(async {
+            let output = Command::new("git")
+                .arg("merge")
+                .arg("upstream/master")
+                .output()
+                .expect("failed to execute process");
+            println!("{}", String::from_utf8_lossy(&output.stderr));
+        });
         Ok(())
     }
 }
