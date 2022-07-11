@@ -7,7 +7,7 @@ Fast git tool to manage and sync your develop branch with upstream easily and fa
 
 `fit checkout <branch>`: git checkout master
 
-At new_branch:
+At branch:
 
 `fit pull`: git pull upstream master, pull the latest code from upstream master branch.
 
