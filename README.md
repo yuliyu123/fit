@@ -1,6 +1,9 @@
 # fit
 A fast git tool to manage and sync your develop branch with upstream easily and fastly.
 
+## installation
+`cargo install --git https://github.com/yuliyu123/fit`
+
 ## alias git cmd
 
 `fit create <branch>`: git branch new_branch & git checkout new_branch
